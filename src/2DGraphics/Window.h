@@ -7,21 +7,24 @@
 
 class Window2D
 {
-    public:
-        Window2D(GravSimulation& GravSim);
+public:
+    Window2D(GravSimulation &GravSim);
 
-    //private:
-        sf::RenderWindow window;
+    // private:
+    sf::RenderWindow window;
 
-        void WaitForClose();
-        sf::CircleShape circle;
-        sf::CircleShape circle2;
+    void WaitForClose();
+    sf::CircleShape circle;
+    sf::CircleShape circle2;
+    sf::CircleShape circle3;
 
-        sf::CircleShape circleOrig;
-        sf::CircleShape circle2Orig;
+    std::vector<sf::CircleShape> Circles;
 
-        sf::Vector2f CirclePos;
-        sf::Vector2f Circle2Pos;
+    sf::Vector2f CirclePos;
+    sf::Vector2f Circle2Pos;
+    sf::Vector2f Circle3Pos;
 
-        GravSimulation& MainGravSim;
+    std::vector<sf::Vector2f> CirclePositions;
+
+    GravSimulation &MainGravSim;
 };

@@ -1,73 +1,97 @@
 #include <iostream>
 #include <chrono>
+#include <cmath>
 #include "GravityParticles.h"
 
 GravSimulation::GravSimulation()
 {
     std::cout << "new GravSimulation" << std::endl;
+
+    LastSimUpdate = std::chrono::steady_clock::now();
 }
 void GravSimulation::Update()
 {
 
-    for (GravParticle* Body : GravParticles)
+    std::chrono::time_point<std::chrono::steady_clock> CurrentTime = std::chrono::steady_clock::now();
+    auto Elapsed = std::chrono::duration_cast<std::chrono::microseconds>(CurrentTime - LastSimUpdate);
+    double DeltaTime = static_cast<double>(Elapsed.count()); // microseconds
+
+    for (GravParticle *Body : GravParticles)
     {
         std::vector<double> BodyPos = Body->GetPos();
         double BodyMass = Body->GetMass();
 
-        std::vector<double> NewAcc = {0,0,0};
+        std::vector<double> NewAcc = {0, 0, 0};
 
-        for (GravParticle* OtherBody : GravParticles)
+        for (GravParticle *OtherBody : GravParticles)
         {
-
+            /*
             std::vector<double> OtherPos = OtherBody->GetPos();
             double OtherMass = OtherBody->GetMass();
 
             std::vector<double> Distance = {
                 (OtherPos[0] - BodyPos[0]),
                 (OtherPos[1] - BodyPos[1]),
-                (OtherPos[2] - BodyPos[2])
-            };
-
+                (OtherPos[2] - BodyPos[2])};
 
             for (int Direction = 0; Direction < 3; Direction++)
             {
                 if (Distance[Direction] == 0)
                 {
                     NewAcc[Direction] += 0;
-                    continue;
                 }
-                else if (Distance[Direction] > 0 )
+                else if (Distance[Direction] > 0)
                 {
-                    NewAcc[Direction] += 
-                    ((GRAVITATIONAL_CONSTANT * OtherMass) / (Distance[Direction] * Distance[Direction]));
-                } 
+                    NewAcc[Direction] +=
+                        ((GRAVITATIONAL_CONSTANT * OtherMass) / (Distance[Direction] * Distance[Direction]));
+                }
                 else if (Distance[Direction] < 0)
                 {
-                    NewAcc[Direction] += 
-                    ((GRAVITATIONAL_CONSTANT * OtherMass) / ((Distance[Direction] * Distance[Direction]) * -1));
+                    NewAcc[Direction] +=
+                        ((GRAVITATIONAL_CONSTANT * OtherMass) / ((Distance[Direction] * Distance[Direction]) * -1));
                 }
             }
+            */
+            double OtherMass = OtherBody->GetMass();
+            double Factor = 0.0;
 
+            std::vector<double> Distance = {
+                (OtherBody->GetPos()[0] - BodyPos[0]),
+                (OtherBody->GetPos()[1] - BodyPos[1]),
+                (OtherBody->GetPos()[2] - BodyPos[2])};
 
+            double DistanceSquared = {
+                (Distance[0] * Distance[0]) +
+                (Distance[1] * Distance[1]) +
+                (Distance[2] * Distance[2])};
+
+            if (DistanceSquared > 1e-10)
+            {
+                Factor = GRAVITATIONAL_CONSTANT * OtherMass / (DeltaTime * std::sqrt(DistanceSquared));
+            }
+
+            for (int Direction = 0; Direction < 3; Direction++)
+            {
+                NewAcc[Direction] += Distance[Direction] * Factor;
+            }
         }
 
-        Body->SetAcc(NewAcc);
+        Body->SetAcc({NewAcc[0] * DeltaTime / 1'000'000.0, NewAcc[1] * DeltaTime / 1'000'000.0, NewAcc[2] * DeltaTime / 1'000'000.0});
         Body->Update();
     }
-
+    LastSimUpdate = std::chrono::steady_clock::now();
 }
 
-void GravSimulation::AddGravParticle(GravParticle* ParticleToAdd)
+void GravSimulation::AddGravParticle(GravParticle *ParticleToAdd)
 {
     std::cout << "New Particle added to GravSim" << std::endl;
     GravParticles.push_back(ParticleToAdd);
 }
 
-std::vector<GravParticle*> GravSimulation::GetParticles()
+std::vector<GravParticle *> GravSimulation::GetParticles()
 {
     return GravParticles;
 }
-
 
 ////////////////////////////
 ///////PARTICLE/////////////
@@ -81,7 +105,6 @@ GravParticle::GravParticle()
     Mass = 0;
 
     LastUpdate = std::chrono::steady_clock::now();
-
 }
 
 GravParticle::~GravParticle()
@@ -91,9 +114,9 @@ GravParticle::~GravParticle()
 
 void GravParticle::Update()
 {
-    std::chrono::time_point<std::chrono::steady_clock> CurrentTime =  std::chrono::steady_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> CurrentTime = std::chrono::steady_clock::now();
     auto Elapsed = std::chrono::duration_cast<std::chrono::microseconds>(CurrentTime - LastUpdate);
-    double DeltaTime = static_cast<double>(Elapsed.count());  // microseconds
+    double DeltaTime = static_cast<double>(Elapsed.count()); // microseconds
 
     for (int Direction = 0; Direction < 3; Direction++)
     {
@@ -110,10 +133,10 @@ void GravParticle::DisplayInfo()
     std::cout << "________________________________" << std::endl;
 }
 
-std::vector<double> GravParticle::GetPos() {return Pos;};
-std::vector<double> GravParticle::GetVel() {return Vel;};
-std::vector<double> GravParticle::GetAcc() {return Acc;};
-double GravParticle::GetMass() {return Mass;};
+std::vector<double> GravParticle::GetPos() { return Pos; };
+std::vector<double> GravParticle::GetVel() { return Vel; };
+std::vector<double> GravParticle::GetAcc() { return Acc; };
+double GravParticle::GetMass() { return Mass; };
 
 void GravParticle::SetPos(std::vector<double> NewPos)
 {
@@ -132,7 +155,7 @@ void GravParticle::SetMass(double NewMass)
     Mass = NewMass;
 }
 
-bool GravParticle::operator==(const GravParticle& other) const
+bool GravParticle::operator==(const GravParticle &other) const
 {
     // Define what makes two particles equal
     return Pos == other.Pos && Vel == other.Vel && Acc == other.Acc;
