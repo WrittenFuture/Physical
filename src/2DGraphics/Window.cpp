@@ -2,6 +2,10 @@
 #include <optional>
 #include <iostream>
 #include <thread>
+#include <chrono>
+#include <vector>
+#include <algorithm>
+#include <cmath>
 #include "../Simulations/GravityParticles.h"
 #include "Window.h"
 
@@ -9,7 +13,8 @@ Window2D::Window2D(GravSimulation &GravSim)
     : MainGravSim(GravSim)
 {
     // SFML 3: VideoMode now takes a Vector2u instead of (width, height)
-    window = sf::RenderWindow(sf::VideoMode({800, 800}), "Gravity Simulation");
+    // sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+    window = sf::RenderWindow(sf::VideoMode({WindowWidth, WindowHeight}), "Gravity Simulation");
 
     circle.setFillColor(sf::Color::Cyan);
     circle.setPosition({0, 0});
@@ -35,12 +40,13 @@ void Window2D::WaitForClose()
 
     while (window.isOpen())
     {
-        while (auto event = window.pollEvent())
+        while (auto eventOpt = window.pollEvent())
         {
-            if (event->is<sf::Event::Closed>())
+            const sf::Event &event = *eventOpt;
+
+            if (event.is<sf::Event::Closed>())
                 window.close();
         }
-
         MainGravSim.Update(); // ideally with fixed timestep
 
         auto Particles = MainGravSim.GetParticles();
@@ -48,8 +54,10 @@ void Window2D::WaitForClose()
         {
             Circles[i].setRadius(5);
             Circles[i].setFillColor(sf::Color::Cyan);
-            CirclePositions[i] = sf::Vector2f(Particles[i]->GetPos()[0] + 400, Particles[i]->GetPos()[1] + 400);
-            Circles[i].setPosition(CirclePositions[i]);
+            CirclePositions[i] = sf::Vector2f(Particles[i]->GetPos()[0] + ((WindowWidth) / 2), Particles[i]->GetPos()[1] + ((WindowHeight) / 2));
+            float clampedX = std::clamp(CirclePositions[i].x, 0.f, static_cast<float>(WindowWidth));
+            float clampedY = std::clamp(CirclePositions[i].y, 0.f, static_cast<float>(WindowHeight));
+            Circles[i].setPosition({clampedX, clampedY});
         }
 
         window.clear();

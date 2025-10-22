@@ -27,4 +27,7 @@ public:
     std::vector<sf::Vector2f> CirclePositions;
 
     GravSimulation &MainGravSim;
+
+    unsigned int WindowWidth = 1920;
+    unsigned int WindowHeight = 1080;
 };
